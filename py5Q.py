@@ -88,10 +88,10 @@ class Zone:
             return other == self.zoneId or other == self.zoneCode or other == self.zoneName or other == self.zoneCoords
 
     def __str__(self):
-        return self.zoneId
+        return self.zoneCode
     
     def __repr__(self):
-        return self.zoneId
+        return self.zoneCode
 
 
 class EndpointList:
@@ -198,7 +198,7 @@ class pyQ:
         data = {
             "pid": "DK5QPID",
             "name": name,
-            "zoneId": zone,
+            "zoneId": str(zone),
             "color": color,
             "effect": effect,
             "message": message,
@@ -251,4 +251,3 @@ class pyQ:
 
     def delete(self, signalId):
         return requests.delete("{0}/{1}".format(self.endpoints.signals, signalId), headers=self._getHeaders())
-
