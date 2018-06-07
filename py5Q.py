@@ -20,10 +20,48 @@ CLIENTSECRET = "YOUR_SECRET"
 BADZONES = [0, 18, 19, 20, 21]
 
 
+class ZoneList(list):
+    """
+    A list of zones. Each zone is accessible by id, code, name, and coordinates
+    Coordinates can be in "x,y" form or as an (x, y) tuple/list.
+    """
+    def __getitem__(self, key):
+        # Handle tuple 
+        if hasattr(key, '__iter__') and len(key) == 2 and isinstance(key[0], int) and isinstance(key[1], int):
+            return super(ZoneList, self).__getitem__(self.index("{0},{1}".format(key[0], key[1])))
+        return super(ZoneList, self).__getitem__(self.index(key))
+
+    def getRange(self, x, y):
+        zones = ZoneList()
+        for i in range(x[0], x[1] + 1):
+            for j in range(y[0], y[1] + 1):
+                try:
+                    zone = self["{0},{1}".format(i, j)]
+                except ValueError:
+                    continue
+                zones.append(zone)
+        return zones
+    
+    @property
+    def numpad(self):
+        return self.getRange((19, 22), (1, 5))
+    
+    @property
+    def function(self):
+        return self.getRange((3, 15), (0, 0))
+    
+    @property
+    def arrows(self):
+        return ZoneList((self["17,4"], self["16,5"], self["17,5"], self["18,5"]))
+    
+    @property
+    def pipes(self):
+        return ZoneList((self[0], self["23,1"]))
+
+
 class Zone:
     """Represents a single zone/key."""
     def __init__(self, zoneId, zoneCode, zoneName):
-        print(zoneId)
         self.zoneId = zoneId
         self.zoneCode = zoneCode
         self.zoneName = zoneName
@@ -40,11 +78,19 @@ class Zone:
         self.zoneCoords = "{0},{1}".format(self.zoneCoordX, self.zoneCoordY)
     
     def __eq__(self, other):
+        # Handle left pipe
         if isinstance(other, str) and str(other).startswith("0,"):
-            return self.zoneId == 0
-        return other == self.zoneId or other == self.zoneCode or other == self.zoneName or other == self.zoneCoords
+            return self.zoneCoordX == 0 and self.zoneCoordY == 0
+        # Handle right pipe
+        elif isinstance(other, str) and str(other).startswith("23,") and self.zoneCoordY != 0:
+            return self.zoneCoordX == 23 and self.zoneCoordY == 1
+        else:
+            return other == self.zoneId or other == self.zoneCode or other == self.zoneName or other == self.zoneCoords
 
     def __str__(self):
+        return self.zoneId
+    
+    def __repr__(self):
         return self.zoneId
 
 
@@ -138,8 +184,8 @@ class pyQ:
 
     def _getZones(self):
         """Returns a list of Zone objects"""
-        zones = []
-        r = requests.get(self.endpoints.zones, headers=self.getHeaders())
+        zones = ZoneList()
+        r = requests.get(self.endpoints.zones, headers=self._getHeaders())
         try:
             jsonZones = json.loads(r.content)
         except TypeError:
@@ -147,15 +193,8 @@ class pyQ:
         for jsonZone in jsonZones:
             zones.append(Zone(jsonZone["id"], jsonZone["code"], jsonZone["name"]))
         return zones
-
-    def getHeaders(self):
-        return {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {0}".format(self.session.token)
-        }
-
-    def signal(self, zone, color, name="pyQ Signal", effect="SET_COLOR", message=None, action=None, shouldNotify=None,
-               isRead=None, isArchived=None, isMuted=None):
+    
+    def _doSignal(self, zone, color, name, effect, message, action, shouldNotify, isRead, isArchived, isMuted):
         data = {
             "pid": "DK5QPID",
             "name": name,
@@ -170,18 +209,28 @@ class pyQ:
             "isMuted": isMuted
         }
         r = requests.post(self.endpoints.signals,
-                          headers=self.getHeaders(), json=data)
+                          headers=self._getHeaders(), json=data)
         try:
             return json.loads(r.content)["id"]
         except TypeError:
             return json.loads(r.content.decode('utf-8'))["id"]
 
+    def _getHeaders(self):
+        return {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {0}".format(self.session.token)
+        }
+
+    def signal(self, zone, color, name="pyQ Signal", effect="SET_COLOR", message=None, action=None, shouldNotify=None,
+               isRead=None, isArchived=None, isMuted=None):
+        return self._doSignal(zone, color, name, effect, message, action, shouldNotify, isRead, isArchived, isMuted)
+
     def batchSignal(self, zones, color, name="pyQ Signal", effect="SET_COLOR", message=None, action=None,
                     shouldNotify=None, isRead=None, isArchived=None, isMuted=None):
         signals = []
         for zone in zones:
-            signals.append(self.signal(zone, color, name, effect, message,
-                                       action, shouldNotify, isRead, isArchived, isMuted))
+            signals.append(self._doSignal(zone, color, name, effect, message,
+                                          action, shouldNotify, isRead, isArchived, isMuted))
         return signals
 
     def batchSignalRange(self, x, y, color, name="pyQ Signal", effect="SET_COLOR", message=None, action=None,
@@ -189,16 +238,17 @@ class pyQ:
         signals = []
         for i in range(x[0], x[1] + 1):
             for j in range(y[0], y[1] + 1):
-                signals.append(self.signal("{0},{1}".format(i, j), color, name=name, effect=effect, message=message,
-                                           action=action, shouldNotify=shouldNotify, isRead=isRead,
-                                           isArchived=isArchived, isMuted=isMuted))
+                signals.append(self._doSignal("{0},{1}".format(i, j), color, name=name, effect=effect, message=message,
+                               action=action, shouldNotify=shouldNotify, isRead=isRead, isArchived=isArchived,
+                               isMuted=isMuted))
         return signals
 
     def archive(self, signalId):
         data = {
             "isArchived": True
         }
-        return requests.patch("{0}/{1}".format(self.endpoints.signals, signalId), headers=self.getHeaders(), json=data)
+        return requests.patch("{0}/{1}".format(self.endpoints.signals, signalId), headers=self._getHeaders(), json=data)
 
     def delete(self, signalId):
-        return requests.delete("{0}/{1}".format(self.endpoints.signals, signalId), headers=self.getHeaders())
+        return requests.delete("{0}/{1}".format(self.endpoints.signals, signalId), headers=self._getHeaders())
+
