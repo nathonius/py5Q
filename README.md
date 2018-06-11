@@ -1,17 +1,46 @@
-Basic usage is like this:
+# py5Q: Python bindings for the Das Keyboard 5Q
+## Installation
+For now, you'll need to clone the repo and impor the repo in another script.
 
-    import py5Q
-    q = py5Q.pyQ(clientId='YOUR ID', secret='YOUR SECRET')
-    id = q.signal("KEY_A", "#ff0000")
-    # ... do some stuff ... #
-    q.delete(id)
+## Usage
 
-Also has built in batch signals. You can either do a list of zones (`batchSignal`) or do a range of coordinates (`batchSignalRange`).
+```python
+import py5Q
+Q = py5Q.py5Q(clientId='YOUR ID', clientSecret='YOUR SECRET')
 
-While `batchSignal` is self explanatory, `batchSignalRange` works like this:
+# Make the A key red
+signalId = Q.signal('KEY_A', '#ff0000')
 
-    # set tilde throuh = key to be red
-    # batchSignalRange((x1, x2), (y1, y2), ...params)
-    signals = q.batchSignalRange((1, 13), (1, 1), "#ff0000")
+# Delete a signal
+Q.delete(signalId)
 
-The main thing this provides is an authentication handler that automatically gets a new token when needed. Everything else is sugar. I'll keep working on it in my spare time; there's still plenty to do.
+# Batch signals
+signalIds = Q.batchSignal(('KEY_A', 'KEY_S', '2,2'), '#00ff00')
+
+# Batch signal range
+# Make the entire 'Insert' through 'Page Down' section of the keyboard blue
+rangeIds = Q.batchSignalRange((16, 18), (1, 2), '#0000ff')
+
+# Special zones
+# Make numpad yellow
+numpadSignals = Q.batchSignal(Q.zones.numpad, '#ffff00')
+```
+
+## Automatic Authentication
+If no `clientId` and `clientSecret` are specified, they will be loaded from a file called `config.json` in the same folder as the `py5Q.py` file. The file is formatted like this:
+
+```json
+{
+    "clientId": "YOUR ID",
+    "clientSecret": "YOUR SECRET",
+    "username": "",
+    "password": ""
+}
+```
+
+With that file, the object can be created like this:
+
+```python
+import py5Q
+Q = py5Q.py5Q()
+```

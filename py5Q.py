@@ -1,6 +1,8 @@
 import requests
 import json
 import time
+import random
+import os
 
 LOCAL = "http://localhost:{0}"
 REMOTE = "https://q.daskeyboard.com"
@@ -14,10 +16,9 @@ COLORS = "{0}/api/1.0/colors"
 ZONES = "{0}/api/1.0/DK5QPID/zones"
 EFFECTS = "{0}/api/1.0/DK5QPID/effects"
 
-CLIENTID = "YOUR_ID"
-CLIENTSECRET = "YOUR_SECRET"
-
 BADZONES = [0, 18, 19, 20, 21]
+
+CONFIGPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")
 
 
 class ZoneList(list):
@@ -26,7 +27,7 @@ class ZoneList(list):
     Coordinates can be in "x,y" form or as an (x, y) tuple/list.
     """
     def __getitem__(self, key):
-        # Handle tuple 
+        # Handle tuple
         if hasattr(key, '__iter__') and len(key) == 2 and isinstance(key[0], int) and isinstance(key[1], int):
             return super(ZoneList, self).__getitem__(self.index("{0},{1}".format(key[0], key[1])))
         return super(ZoneList, self).__getitem__(self.index(key))
@@ -41,22 +42,26 @@ class ZoneList(list):
                     continue
                 zones.append(zone)
         return zones
-    
+
     @property
     def numpad(self):
         return self.getRange((19, 22), (1, 5))
-    
+
     @property
     def function(self):
         return self.getRange((3, 15), (0, 0))
-    
+
     @property
     def arrows(self):
         return ZoneList((self["17,4"], self["16,5"], self["17,5"], self["18,5"]))
-    
+
     @property
     def pipes(self):
         return ZoneList((self[0], self["23,1"]))
+
+    @property
+    def random(self):
+        return super(ZoneList, self).__getitem__(random.randint(0, len(self) - 1))
 
 
 class Zone:
@@ -76,7 +81,7 @@ class Zone:
             self.zoneCoordX = 0
             self.zoneCoordY = 0
         self.zoneCoords = "{0},{1}".format(self.zoneCoordX, self.zoneCoordY)
-    
+
     def __eq__(self, other):
         # Handle left pipe
         if isinstance(other, str) and str(other).startswith("0,"):
@@ -89,7 +94,7 @@ class Zone:
 
     def __str__(self):
         return self.zoneCode
-    
+
     def __repr__(self):
         return self.zoneCode
 
@@ -114,7 +119,7 @@ class EndpointList:
 
 class QSession:
     """Gets OAuth token and automatically refreshes token when needed"""
-    def __init__(self, clientId, secret, endpoint, mode="secret"):
+    def __init__(self, clientId, secret, endpoint, mode):
         self._endpoint = endpoint
         self._clientId = clientId
         tokens = self.authenticate(clientId, secret, mode)
@@ -134,12 +139,25 @@ class QSession:
         self._userId = tokens["user_id"]
         self._expiresAt = time.time() + tokens["expires_in"] - 1000
 
-    def authenticate(self, clientId, secret, mode):
-        """ClientId + Secret auth is preferred"""
+    def authenticate(self, clientId, clientSecret, mode):
+        # Read from config file if no id/secret given
+        if not clientId and not clientSecret:
+            with open(CONFIGPATH, 'r') as configFile:
+                config = json.load(configFile)
+                if config["clientId"] != "" and config["clientSecret"] != "":
+                    clientId = config["clientId"]
+                    clientSecret = config["clientSecret"]
+                    mode = "secret"
+                elif config["username"] != "" and config["password"] != "":
+                    clientId = config["username"]
+                    clientSecret = config["password"]
+                    mode = "password"
+
+        # ClientId + Secret auth is preferred
         if mode != "secret":
-            return self.authenticateEmailPassword(clientId, secret)
+            return self.authenticateEmailPassword(clientId, clientSecret)
         else:
-            return self.authenticateClientSecret(clientId, secret)
+            return self.authenticateClientSecret(clientId, clientSecret)
 
     def authenticateClientSecret(self, clientId, secret):
         data = {
@@ -175,11 +193,11 @@ class QSession:
         self.updateTokens(tokens)
 
 
-class pyQ:
+class py5Q:
     """Main class. Handles creating the session and creating signals."""
-    def __init__(self, mode="remote", port=27301, clientId=CLIENTID, secret=CLIENTSECRET):
+    def __init__(self, mode="remote", port=27301, clientId=None, clientSecret=None, authMode="secret"):
         self.endpoints = EndpointList(mode, port)
-        self.session = QSession(clientId, secret, self.endpoints.auth)
+        self.session = QSession(clientId, clientSecret, self.endpoints.auth, mode=authMode)
         self.zones = self._getZones()
 
     def _getZones(self):
@@ -193,7 +211,7 @@ class pyQ:
         for jsonZone in jsonZones:
             zones.append(Zone(jsonZone["id"], jsonZone["code"], jsonZone["name"]))
         return zones
-    
+
     def _doSignal(self, zone, color, name, effect, message, action, shouldNotify, isRead, isArchived, isMuted):
         data = {
             "pid": "DK5QPID",
