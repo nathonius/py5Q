@@ -15,6 +15,7 @@ DEVICES = "{0}/api/1.0/devices"
 COLORS = "{0}/api/1.0/colors"
 ZONES = "{0}/api/1.0/DK5QPID/zones"
 EFFECTS = "{0}/api/1.0/DK5QPID/effects"
+SHADOW = "{0}/api/1.0/signals/shadows/DK5QPID"
 
 BADZONES = [0, 18, 19, 20, 21]
 
@@ -115,6 +116,7 @@ class EndpointList:
         self.colors = COLORS.format(source)
         self.zones = ZONES.format(source)
         self.effects = EFFECTS.format(source)
+        self.shadow = SHADOW.format(source)
 
 
 class QSession:
@@ -269,3 +271,15 @@ class py5Q:
 
     def delete(self, signalId):
         return requests.delete("{0}/{1}".format(self.endpoints.signals, signalId), headers=self._getHeaders())
+
+    def deleteAll(self):
+        shadow = self.getShadow()
+        for signal in shadow["content"]:
+            self.delete(signal["id"])
+
+    def getShadow(self):
+        r = requests.get(self.endpoints.shadow, headers=self._getHeaders())
+        try:
+            return json.loads(r.content)
+        except TypeError:
+            return json.loads(r.content.decode('utf-8'))

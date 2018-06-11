@@ -24,6 +24,9 @@ rangeIds = Q.batchSignalRange((16, 18), (1, 2), '#0000ff')
 # Special zones
 # Make numpad yellow
 numpadSignals = Q.batchSignal(Q.zones.numpad, '#ffff00')
+
+# Delete ALL signals
+Q.deleteAll()
 ```
 
 ## Automatic Authentication
