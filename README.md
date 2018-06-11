@@ -1,6 +1,6 @@
 # py5Q: Python bindings for the Das Keyboard 5Q
 ## Installation
-For now, you'll need to clone the repo and impor the repo in another script.
+For now, you'll need to clone the repo and import the repo in another script.
 
 ## Usage
 
