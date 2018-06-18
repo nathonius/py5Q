@@ -1,5 +1,5 @@
 import py5Q
-Q = py5Q.py5Q()
+Q = py5Q.Q()
 
 # Make the A key red
 signalId = Q.signal('KEY_A', '#ff0000')
