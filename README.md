@@ -59,7 +59,7 @@ option (short)|effect|default|example
 --message (-m)|Signal message.|None|`--message "Signal message."`
 --notify|Sets `shouldNotify` true.|None|`--notify`
 --read (-r)|Sets `isRead` true.|None|`--read`
---archived (-a)|Sets `isArchived` true.|None|`--archived`
+--archived (-a)|Sets `isArchived` true. Signal will be shown in the signal center, but not on the keyboard.|None|`--archived`
 --muted|Sets `isMuted` true.|None|`--muted`
 
 #### delete Options
