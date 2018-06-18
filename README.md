@@ -89,4 +89,4 @@ Q = py5Q.py5Q()
 ```
 
 ## Token Caching
-Unless `--no-cache` is specified, tokens will be read from a `tokens.json` file in the same directory as the script.
+Unless `--no-cache` is specified on the CLI or the py5Q object is created with `cacheTokens=False`, tokens will be read from a `tokens.json` file in the same directory as the script.
