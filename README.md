@@ -30,6 +30,7 @@ Q.deleteAll()
 ```
 
 ## Command Line Usage
+For now, CLI usage *requires* automatic authentication.
 
 ```
 // A Key -> Red
