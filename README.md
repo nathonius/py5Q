@@ -34,10 +34,10 @@ For now, CLI usage *requires* automatic authentication.
 
 ```
 // A Key -> Red
-py5Q.py signal -z KEY_A -c #ff0000
+Q.py signal -z KEY_A -c #ff0000
 
 // Delete all signals
-py5Q.py delete --all
+Q.py delete --all
 ```
 
 #### Full Command Line Reference
