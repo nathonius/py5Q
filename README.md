@@ -30,6 +30,7 @@ Q.deleteAll()
 ```
 
 ## Command Line Usage
+For now, CLI usage *requires* automatic authentication.
 
 ```
 // A Key -> Red
@@ -54,11 +55,11 @@ option (short)|effect|default|example
 --zones (-z)|Which zones to affect. Can be one or a list.|No default. This option is required.|`--zones KEY_A KEY_B`
 --color (-c)|Color to set.|No default. This option is required.|`--color #ff0000`
 --name (-n)|Name of signal.|`"py5Q Signal"`|`--name "My Signal"`
---effect (-e)|Effect to use. See [here](https://www.daskeyboard.io/q-api-doc/#effects) for a list.|`SET_COLOR`|`--effect BLINK`
+--effect (-e)|Effect to use. See [here](https://q.daskeyboard.com/api/1.0/DK5QPID/effects) for a list.|`SET_COLOR`|`--effect BLINK`
 --message (-m)|Signal message.|None|`--message "Signal message."`
 --notify|Sets `shouldNotify` true.|None|`--notify`
 --read (-r)|Sets `isRead` true.|None|`--read`
---archived (-a)|Sets `isArchived` true.|None|`--archived`
+--archived (-a)|Sets `isArchived` true. Signal will be shown in the signal center, but not on the keyboard.|None|`--archived`
 --muted|Sets `isMuted` true.|None|`--muted`
 
 #### delete Options
@@ -88,4 +89,4 @@ Q = py5Q.py5Q()
 ```
 
 ## Token Caching
-Unless `--no-cache` is specified, tokens will be read from a `tokens.json` file in the same directory as the script.
+Unless `--no-cache` is specified on the CLI or the py5Q object is created with `cacheTokens=False`, tokens will be read from a `tokens.json` file in the same directory as the script.
