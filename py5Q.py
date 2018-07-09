@@ -51,12 +51,18 @@ class py5Q:
         except TypeError:
             return json.loads(r.content.decode('utf-8'))["id"]
 
-    def _getHeaders(self):
-        if self.mode is "remote":
+    def _getHeaders(self, authOnly=False):
+        if self.mode is "remote" and authOnly:
+            return {
+                "Authorization": "Bearer {0}".format(self.session.token)
+            }
+        elif self.mode is "remote":
             return {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer {0}".format(self.session.token)
             }
+        elif authOnly:
+            return None
         else:
             return {
                 "Content-Type": "application/json"
@@ -94,12 +100,21 @@ class py5Q:
         return requests.delete("{0}/{1}".format(self.endpoints.signals, signalId), headers=self._getHeaders())
 
     def deleteAll(self):
-        # not sure if this is necessary
-        shadow = self.getShadow()
-        while len(shadow["content"]) > 0:
-            for signal in shadow["content"]:
-                self.delete(signal["id"])
-            shadow = self.getShadow()
+        signals = self.getAllSignals()
+        for signal in signals:
+            self.delete(signal["id"])
+
+    def getAllSignals(self):
+        r = requests.get(self.endpoints.signals, headers=self._getHeaders(True))
+        try:
+            decoded = json.loads(r.content)
+        except TypeError:
+            decoded = json.loads(r.content.decode('utf-8'))
+        
+        if self.mode is "remote":
+            return decoded["content"]
+        else:
+            return decoded
 
     def getShadow(self):
         if not self.endpoints.shadow:
