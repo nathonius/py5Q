@@ -9,12 +9,17 @@ class py5Q:
     """Main class. Handles creating the session and creating signals."""
     def __init__(self, mode="remote", port=27301, clientId=None, clientSecret=None, authMode="secret",
                  cacheTokens=True):
+        self.mode = mode
         self.endpoints = EndpointList(mode, port)
-        self.session = Session(clientId, clientSecret, self.endpoints.auth, mode=authMode, cacheTokens=cacheTokens)
-        self.zones = self._getZones()
+        if mode is "remote":
+            self.session = Session(clientId, clientSecret, self.endpoints.auth, mode=authMode, cacheTokens=cacheTokens)
+            self.zones = self._getZones()
 
     def _getZones(self):
         """Returns a list of Zone objects"""
+        if not self.endpoints.zones:
+            raise CloudOnlyEndpointException()
+
         zones = ZoneList()
         r = requests.get(self.endpoints.zones, headers=self._getHeaders())
         try:
@@ -47,10 +52,15 @@ class py5Q:
             return json.loads(r.content.decode('utf-8'))["id"]
 
     def _getHeaders(self):
-        return {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {0}".format(self.session.token)
-        }
+        if self.mode is "remote":
+            return {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer {0}".format(self.session.token)
+            }
+        else:
+            return {
+                "Content-Type": "application/json"
+            }
 
     def signal(self, zone, color, name="pyQ Signal", effect="SET_COLOR", message=None, action=None, shouldNotify=None,
                isRead=None, isArchived=None, isMuted=None):
@@ -92,8 +102,14 @@ class py5Q:
             shadow = self.getShadow()
 
     def getShadow(self):
+        if not self.endpoints.shadow:
+            raise CloudOnlyEndpointException()
         r = requests.get(self.endpoints.shadow, headers=self._getHeaders())
         try:
             return json.loads(r.content)
         except TypeError:
             return json.loads(r.content.decode('utf-8'))
+
+
+class CloudOnlyEndpointException(Exception):
+    pass

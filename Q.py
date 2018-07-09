@@ -3,11 +3,15 @@ from py5Q import py5Q
 
 parser = argparse.ArgumentParser(description='Send signals to your 5Q.')
 parser.add_argument('--no-cache', action='store_false', default=True, dest='cache')
+parser.add_argument('--local', action='store_true', default=False)
 subparsers = parser.add_subparsers()
 
 
 def signalCommand(args):
-    client = py5Q(cacheTokens=args.cache)
+    mode = 'remote'
+    if args.local:
+        mode = 'local'
+    client = py5Q(cacheTokens=args.cache, mode=mode)
     if len(args.zones) > 1:
         client.batchSignal(args.zones, args.color, name=args.name, effect=args.effect, message=args.message,
                            shouldNotify=args.notify, isRead=args.read, isArchived=args.archived, isMuted=args.muted)
@@ -17,7 +21,10 @@ def signalCommand(args):
 
 
 def deleteCommand(args):
-    client = py5Q(cacheTokens=args.cache)
+    mode = 'remote'
+    if args.local:
+        mode = 'local'
+    client = py5Q(cacheTokens=args.cache, mode=mode)
     if args.all:
         client.deleteAll()
     else:
