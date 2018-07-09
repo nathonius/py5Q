@@ -20,12 +20,22 @@ class EndpointList:
         else:
             source = REMOTE
 
-        self.auth = AUTH.format(source)
+        self.auth = None
         self.signals = SIGNALS.format(source)
-        self.authorized_clients = AUTHORIZED_CLIENTS.format(source)
-        self.device_definitions = DEVICE_DEFINITONS.format(source)
-        self.devices = DEVICES.format(source)
-        self.colors = COLORS.format(source)
-        self.zones = ZONES.format(source)
-        self.effects = EFFECTS.format(source)
-        self.shadow = SHADOW.format(source)
+        self.authorized_clients = None
+        self.device_definitions = None
+        self.devices = None
+        self.colors = None
+        self.zones = None
+        self.effects = None
+        self.shadow = None
+
+        if mode is "remote":
+            self.auth = AUTH.format(source)
+            self.authorized_clients = AUTHORIZED_CLIENTS.format(source)
+            self.device_definitions = DEVICE_DEFINITONS.format(source)
+            self.devices = DEVICES.format(source)
+            self.colors = COLORS.format(source)
+            self.zones = ZONES.format(source)
+            self.effects = EFFECTS.format(source)
+            self.shadow = SHADOW.format(source)
