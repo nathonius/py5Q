@@ -1,3 +1,6 @@
+# WARNING
+I have no idea what the status of this code is right now. I haven't touched it in a while and it's very possible I left it broken. Don't @ me.
+
 # py5Q: Python bindings for the Das Keyboard 5Q
 ## Installation
 For now, you'll need to clone the repo.
