@@ -7,7 +7,7 @@ For now, you'll need to clone the repo.
 
 ## Script Usage
 
-```python
+``` python
 import py5Q
 Q = py5Q.py5Q(clientId='YOUR ID', clientSecret='YOUR SECRET')
 
